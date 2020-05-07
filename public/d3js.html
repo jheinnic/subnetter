@@ -29,16 +29,39 @@
 
 <script>
 
+var root = JSON.parse(JSON.stringify(window.opener.jsonData));
+var answer = new Array()
+var leaf_count = 0;
+
+function js_traverse(o) {
+    if (o.hasOwnProperty("type")) {
+      answer.push(o.type);
+      if (o.type == 'subnet') {
+        leaf_count = leaf_count + 1;
+      }
+    }
+    var type = typeof o
+    if (type == "object") {
+        for (var key in o) {
+            js_traverse(o[key], answer)
+        }
+    }
+}
+
+js_traverse(root);
+
 var w = window.innerWidth
 var h = window.innerHeight;
+
+w = w * 2;
+h = leaf_count * 26; // 2.15 em is the desired multiplier, but must be in px
 
 var margin = {top: 10, right: 120, bottom: 10, left: 120},
     width = w - margin.right - margin.left,
     height = h - margin.top - margin.bottom;
 
 var i = 0,
-    duration = 750,
-    root;
+    duration = 750;
 
 var tree = d3.layout.tree()
     .size([height, width]);
@@ -52,23 +75,6 @@ var svg = d3.select("body").append("svg")
     .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-var root = JSON.parse(JSON.stringify(window.opener.jsonData));
-
-var answer = new Array()
-
-function js_traverse(o) {
-    if (o.hasOwnProperty("type")) {
-      answer.push(o.type);
-    }
-    var type = typeof o
-    if (type == "object") {
-        for (var key in o) {
-            js_traverse(o[key], answer)
-        }
-    }
-}
-
-js_traverse(root);
 var types = ([...new Set(answer)]).sort();
 var colors = d3.scale.category20();
 colors.domain(types);
@@ -121,18 +127,36 @@ root.x0 = height / 2;
 root.y0 = 0;
 
 function collapse(d) {
-  if (d.children) {
+  if (d == root && d.children) {
+    d.children.forEach(collapse);
+  } else if (d.children && d.children.length > 0) {
     d._children = d.children;
     d._children.forEach(collapse);
     d.children = null;
   }
 }
 
-root.children.forEach(collapse);
+function collapse_root() {
+  root.children.forEach(collapse);
+}
+
+function expand(d) {
+  if (d == root && d.children) {
+    d.children.forEach(expand);
+  } else if (d._children && d._children.length > 0) {
+    d.children = d._children;
+    d._children = null;
+  }
+}
+
+function expand_root() {
+  root.children.forEach(expand);
+}
+
 update(root);
 
-
 d3.select(self.frameElement).style("height", "95vh");
+d3.select(self.frameElement).style("width", "100vw");
 
 function update(source) {
 
@@ -141,7 +165,7 @@ function update(source) {
       links = tree.links(nodes);
 
   // Normalize for fixed-depth.
-  nodes.forEach(function(d) { d.y = d.depth * 180; });
+  nodes.forEach(function(d) { d.y = d.depth * 150; });
 
   // Update the nodes…
   var node = svg.selectAll("g.node")
@@ -150,7 +174,8 @@ function update(source) {
   // Enter any new nodes at the parent's previous position.
   var nodeEnter = node.enter().append("g")
       .attr("class", "node")
-      .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
+      .attr("transform", function(d) {
+	      return "translate(" + source.y0 + "," + source.x0 + ")"; })
       .on("click", click);
 
   nodeEnter.append("circle")
@@ -161,6 +186,7 @@ function update(source) {
   nodeEnter.append("text")
       .attr("class", "text")
       .attr("x", function(d) { return d.children || d._children ? -10 : 10; })
+      .attr("y", function(d) { return d.children || d._children ? 0 : -6; } )
       .attr("dy", ".35em")
       .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
       .text(function(d) { return d.name; })
@@ -169,7 +195,8 @@ function update(source) {
   nodeEnter.append("text")
       .attr("class", "value")
       .attr("x", function(d) { return d.children || d._children ? -10 : 10; })
-      .attr("dy", "1.25em")
+      .attr("y", function(d) { return d.children || d._children ? 0 : -6; } )
+      .attr("dy", "1.27em")
       .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
       .text(function(d) { return `${d.network} (${d.ips})`; })
       .style("fill-opacity", 1e-6)
@@ -179,7 +206,8 @@ function update(source) {
   // Transition nodes to their new position.
   var nodeUpdate = node.transition()
       .duration(duration)
-      .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
+      .attr("transform", function(d) {
+	      return "translate(" + d.y + "," + d.x + ")"; });
 
   nodeUpdate.select("circle")
       .attr("r", 4.5)
@@ -243,11 +271,9 @@ function update(source) {
 // Toggle children on click.
 function click(d) {
   if (d.children) {
-    d._children = d.children;
-    d.children = null;
+    collapse(d);
   } else {
-    d.children = d._children;
-    d._children = null;
+    expand(d);
   }
   update(d);
 }

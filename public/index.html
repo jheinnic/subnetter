@@ -83,49 +83,93 @@ mainController.$inject = ["$scope", "$http", "$sce", "$log", "$window"];
 function mainController($scope, $http, $sce, $log, $window) {
   $scope.design = "";
   $scope.acedata = `
-  site1: Seattle, WA
-  site2: Portland, OR
-  site3: Denver, CO
-  site4: New York, NY
-  site5: Tampa, FL
-
-  adminblock: &adminblock
-    - name: management systems
+  base28: &base28
+    - name: Unused
       type: subnet
-    - name: loopback addresses
+    - name: Unused
       type: subnet
-
-
-  office: &office
-    - name: Users
-      type: subnet
-    - name: Phones
-      type: subnet
-    - name: Network Admin
-      type: admin block
-      children: *adminblock
-
-
+  base27: &base27
+    - name: Unused
+      type: container
+      children: *base28
+    - name: Unused
+      type: container
+      children: *base28
+  base26: &base26
+    - name: Unused
+      type: container
+      children: *base27
+    - name: Unused
+      type: container
+      children: *base27
+  base25: &base25
+    - name: Unused
+      type: container
+      children: *base26
+    - name: Unused
+      type: container
+      children: *base26
+  base24: &base24
+    - name: Unused
+      type: container
+      children: *base25
+    - name: Unused
+      type: container
+      children: *base25
+  base23: &base23
+    - name: Unused
+      type: container
+      children: *base24
+    - name: Unused
+      type: container
+      children: *base24
+  base22: &base22
+    - name: Unused
+      type: container
+      children: *base23
+    - name: Unused
+      type: container
+      children: *base23
+  base21: &base21
+    - name: Unused
+      type: container
+      children: *base22
+    - name: Unused
+      type: container
+      children: *base22
+  base20: &base20
+    - name: Unused
+      type: container21
+      children: *base21
+    - name: Unused
+      type: container21
+      children: *base21
+  base19: &base19
+    - name: Unused
+      type: container
+      children: *base20
+    - name: Unused
+      type: container
+      children: *base20
+  base18: &base18
+    - name: Unused
+      type: container
+      children: *base19
+    - name: Unused
+      type: container
+      children: *base19
+  base17: &base17
+    - name: Unused
+      type: container
+      children: *base18
+    - name: Unused
+      type: container
+      children: *base18
   name: "Sample network design"   # The name of the root node
-  root: 10.200.0.0/20             # The root network to subnet
+  root: 10.200.0.0/16             # The root network to subnet
   type: WAN                       # The type (used in the legend)
-  spec:
-      - name: "{{site1}}"
-        type: container
-        children: *office
-      - name: "{{site2}}"
-        type: container
-        children: *office
-      - name: "{{site3}}"
-        type: container
-        children: *office
-      - name: "{{site4}}"
-        type: container
-        children: *office
-      - name: "{{site5}}"
-        type: container
-        children: *office
-  `;
+  spec: *base17
+`;
   $scope.acejson ='';
   $scope.acejsonOptions = {
     onLoad: function (_ace) {
@@ -162,6 +206,7 @@ function mainController($scope, $http, $sce, $log, $window) {
       var mask = Number(parts.mask)
       var ips = Math.pow(2,32-mask)
       var answer = subnets(design.root, design.spec)
+      console.log(answer);
       var json = {
         network: design.root,
         name: design.name,
@@ -186,8 +231,8 @@ function mainController($scope, $http, $sce, $log, $window) {
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
   })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-  ga('create', 'UA-76258645-1', 'auto');
-  ga('send', 'pageview');
+  // ga('create', 'UA-76258645-1', 'auto');
+  // ga('send', 'pageview');
 
 </script>
 
